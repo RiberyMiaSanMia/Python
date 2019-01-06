@@ -1,0 +1,50 @@
+#! /usr/bin/env python
+#coding=utf-8
+
+import smtplib
+from email.mime.application import MIMEApplication
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.header import Header
+
+#qq邮箱smtp服务器
+host = 'smtp.qq.com'
+user = '474662241@qq.com'     
+sender = '474662241@qq.com'
+receiver = '51184700052@stu.ecnu.edu.cn'#设置接收者邮箱
+pwd = '11111111111111111111'#此识别码为示例，具体识别码请前往自己的QQ邮箱设置获取
+subject='测试报告（附件）'
+
+#创建一个带附件的实例
+msg=MIMEMultipart()
+file=r'C:\\Users\Ribery\Desktop\肾移植文献讲稿.docx'
+att = MIMEApplication(open(file, 'rb').read())
+att.add_header('Content-Disposition', 'attachment', filename="TestResult.xlsx")
+msg.attach(att)
+
+
+#att["Content-Type"] = 'application/octet-stream' #以流的形式下载文件
+#附件格式处理
+#new_file='=?utf-8?b?' + base64.b64encode(file.encode()).decode() + '?='
+#att["Cotent-Disposition"]='attachment;filename="%s"'%new_file
+
+#正文
+msg.attach(MIMEText(
+                    '尊敬的用户您好：\n'
+                    '   以下附件为本次发送内容：'))
+
+msg["Subject"] = Header(subject, 'utf-8')
+msg["From"] = sender
+msg["To"] = Header("接收者测试", 'utf-8')
+
+try:
+    #smtp=smtplib.SMTP('smtp.qq.com')
+    #smtp = smtplib.SMTP_SSL()
+    smtp=smtplib.SMTP_SSL('smtp.qq.com', port=465) #QQ邮箱的服务器和端口号
+    #smtp.connect(host)
+    smtp.login(user, pwd)
+    smtp.sendmail(sender,receiver,msg.as_string())
+    smtp.quit()
+    print('邮件发送成功')
+except smtplib.SMTPException as err:
+    print(err)
