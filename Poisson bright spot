@@ -1,0 +1,62 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import scipy.special as sp
+
+Nobj = 3e3 # number of sampling in object plane
+Nimg = 5e2 # number of sampling in image plane
+
+WL = 100e-9 # wavelength of the light, in meter
+C = 2.998e8 # speed of light, in m/s
+K0 = 2*np.pi/WL # K vector, in m^-1
+W0 = 2*np.pi*C/WL # frequency, in Hz
+# propagation distance
+Z = 0.05 # to make near-axis approximation available, Z should be larger than 20*mask size
+R_mask = 3.0e-4 # Radius of mask
+
+objWindowSize = 1e-3 # window size of object plane
+imgWindowSize = 4e-4 # window size of image plane
+
+dRo = objWindowSize/Nobj # mesh grid size for object plane
+dRi = imgWindowSize/Nimg # mesh grid size for image plane
+
+ro = np.linspace(0,objWindowSize,Nobj) # radius coordinate for object plane
+ri = np.linspace(0,imgWindowSize,Nimg) # radius coordinate for image plane
+Ro, Ri = np.meshgrid(ro,ri)
+
+Uobj = np.piecewise(Ro, [Ro<R_mask, Ro>=R_mask],[0,1]) # define the mask (object) on meshgrid
+OBJ = np.average(Uobj,axis = 0) # r dependent mask function
+
+"""
+Use frensel diffraction (under near axis approximation) formula
+to calculate the diffraction pattern after a propagation distance of Z 
+"""
+DIFF = Uobj*K0/(1j*Z)*np.exp(-1j*W0*Z/C + 1j*K0*((Ri**2)+(Ro**2)+(Z**2))/(2*Z))*(sp.j0(K0*Ro*Ri/Z))*Ro*dRo
+IMG = np.sum(DIFF,axis = 1) # the image
+
+"""
+show the data in a 2D polar plot
+"""
+phi = np.linspace(0,2*np.pi,100)
+img = abs(IMG)**2
+obj = abs(OBJ)**2
+obj_2D = np.asarray([obj]*len(phi)).transpose()
+img_2D = np.asarray([img]*len(phi)).transpose()
+
+def polar_plot(r, phi, data, ax):
+    phi_grid, r_grid = np.meshgrid(phi, r)
+    x, y = r_grid*np.cos(phi_grid), r_grid*np.sin(phi_grid)
+    ax.pcolormesh(x, y, data,cmap='gist_gray')
+
+fig = plt.figure(figsize=(16, 8))
+fig.suptitle(f"Mask radius is {R_mask*1000} mm, \n Diffracted beam is measured at {Z*1000} mm behind the mask.")
+ax1 = fig.add_subplot(121)
+ax2 = fig.add_subplot(122)
+ax2.set_title("Demonstration of Poisson Spot (the bright spot in the middle!)")
+ax1.set_title("Input image of a mask")
+ax1.set_xlabel("x (mm)")
+ax1.set_ylabel("y (mm)")
+ax2.set_xlabel("x (mm)")
+ax2.set_ylabel("y (mm)")
+polar_plot(ri*1000,phi,img_2D,ax2)
+polar_plot(ro*1000,phi,obj_2D,ax1)
+plt.show()
