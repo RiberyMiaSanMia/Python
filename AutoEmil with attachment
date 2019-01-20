@@ -37,7 +37,7 @@ msg["Subject"] = Header(subject, 'utf-8')
 msg["From"] = sender
 msg["To"] = Header("接收者测试", 'utf-8')
 
-try:
+try: 
     #smtp=smtplib.SMTP('smtp.qq.com')
     #smtp = smtplib.SMTP_SSL()
     smtp=smtplib.SMTP_SSL('smtp.qq.com', port=465) #QQ邮箱的服务器和端口号
